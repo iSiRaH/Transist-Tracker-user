@@ -37,7 +37,7 @@ dependencies:
   curved_navigation_bar: ^1.0.6
   smooth_page_indicator: ^1.2.1
   flutter_riverpod: ^2.6.1
-  dio: ^5.9.0
+  dio: ^5.9.2
   flutter_secure_storage: ^9.2.4
   shared_preferences: ^2.5.3
   jwt_decoder: ^2.0.1
