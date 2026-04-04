@@ -13,11 +13,10 @@ class FindBusPage extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-           
             Row(
               children: [
                 const CircleAvatar(
-                  backgroundImage: AssetImage('assets/images/avatar.png'), 
+                  backgroundImage: AssetImage('assets/images/avatar.png'),
                   radius: 24,
                 ),
                 const SizedBox(width: 10),
@@ -25,9 +24,11 @@ class FindBusPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
                     Text("Hello Rose!",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
                     Text("Where you want to go?",
-                        style: TextStyle(color: Color(0xffFFD800), fontSize: 14)),
+                        style:
+                            TextStyle(color: Color(0xffFFD800), fontSize: 14)),
                   ],
                 ),
                 const Spacer(),
@@ -36,72 +37,74 @@ class FindBusPage extends StatelessWidget {
                 const Icon(Icons.notifications_none, size: 26),
               ],
             ),
-           const SizedBox(height: 20),
-
-           Container(
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color:  Color(0xffFFD800),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-               
-                DestinationInputField(
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Color(0xffFFD800),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  DestinationInputField(
                     hintname: "Boarding From",
                   ),
-                
-                const SizedBox(height: 2,),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [                   
-                    CircleAvatar(
-                      backgroundColor: Colors.black,
-                      child: Icon(Icons.swap_horiz, color: Colors.white,),
-                    ),                 
-                  ],
-                ),
-
-                const SizedBox(height: 2,),
-
-                DestinationInputField(
-                  hintname: "Where are you going",
-                ), 
-
-                Container(
-                  child: Row(
+                  const SizedBox(
+                    height: 2,
+                  ),
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      BorderComponent(name: "Today", icons_name: Icons.today),
-                      BorderComponent(name: "Tomorrow", icons_name: Icons.calendar_today),
-                      BorderComponent(name: "Other", icons_name:Icons.more_horiz),
+                      CircleAvatar(
+                        backgroundColor: Colors.black,
+                        child: Icon(
+                          Icons.swap_horiz,
+                          color: Colors.white,
+                        ),
+                      ),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 16,),
-
-                ElevatedButton(
-                  onPressed: (){
-                    print("object");
-                    },
+                  const SizedBox(
+                    height: 2,
+                  ),
+                  DestinationInputField(
+                    hintname: "Where are you going",
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      BorderComponent(name: "Today", iconName: Icons.today),
+                      BorderComponent(
+                          name: "Tomorrow", iconName: Icons.calendar_today),
+                      BorderComponent(
+                          name: "Other", iconName: Icons.more_horiz),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  ElevatedButton(
+                    onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 15.0), 
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(22), 
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 40.0, vertical: 15.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                    ),
+                    child: Text(
+                      "Find Buses",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                   ),
-                    child: Text("Find Buses", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),),
-                ), 
-              ],
+                ],
+              ),
             ),
-           ),
           ],
-         ),
+        ),
       ),
     );
   }
-
 }

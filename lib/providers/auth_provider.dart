@@ -116,7 +116,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     final token = await _authService.getSavedToken();
-    final hasValidToken = token != null && token.isNotEmpty && !JwtDecoder.isExpired(token);
+    final hasValidToken =
+        token != null && token.isNotEmpty && !JwtDecoder.isExpired(token);
 
     if (hasValidToken) {
       state = state.copyWith(
@@ -165,9 +166,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(
         isSubmitting: false,
         authStatus: AuthStatus.unauthenticated,
-        errorMessage: error.response?.data is Map<String, dynamic>
-            ? (error.response?.data['message']?.toString() ?? 'Login failed')
-            : (error.message ?? 'Login failed'),
+        errorMessage: _resolveErrorMessage(error, fallback: 'Login failed'),
       );
     } catch (_) {
       state = state.copyWith(
@@ -186,8 +185,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isSubmitting: true, clearError: true);
 
     try {
-      final token =
-          await _authService.signup(name: name, email: email, password: password);
+      final token = await _authService.signup(
+          name: name, email: email, password: password);
       await _authService.saveSession(token);
 
       state = state.copyWith(
@@ -200,9 +199,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(
         isSubmitting: false,
         authStatus: AuthStatus.unauthenticated,
-        errorMessage: error.response?.data is Map<String, dynamic>
-            ? (error.response?.data['message']?.toString() ?? 'Signup failed')
-            : (error.message ?? 'Signup failed'),
+        errorMessage: _resolveErrorMessage(error, fallback: 'Signup failed'),
       );
     } catch (_) {
       state = state.copyWith(
@@ -234,5 +231,51 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   void showLogin() {
     state = state.copyWith(authScreen: AuthScreen.login, clearError: true);
+  }
+
+  String _resolveErrorMessage(DioException error, {required String fallback}) {
+    final payload = error.response?.data;
+    final payloadMessage = _extractMessage(payload);
+    if (payloadMessage != null && payloadMessage.isNotEmpty) {
+      return payloadMessage;
+    }
+
+    if (error.message != null && error.message!.isNotEmpty) {
+      return error.message!;
+    }
+
+    return fallback;
+  }
+
+  String? _extractMessage(dynamic payload) {
+    if (payload is Map<String, dynamic>) {
+      const keys = <String>['message', 'error', 'detail'];
+
+      for (final key in keys) {
+        final value = payload[key];
+        if (value is String && value.isNotEmpty) {
+          return value;
+        }
+      }
+
+      final nestedData = payload['data'];
+      if (nestedData != null) {
+        final nestedMessage = _extractMessage(nestedData);
+        if (nestedMessage != null && nestedMessage.isNotEmpty) {
+          return nestedMessage;
+        }
+      }
+    }
+
+    if (payload is List) {
+      for (final item in payload) {
+        final nestedMessage = _extractMessage(item);
+        if (nestedMessage != null && nestedMessage.isNotEmpty) {
+          return nestedMessage;
+        }
+      }
+    }
+
+    return null;
   }
 }
