@@ -35,9 +35,10 @@ class AuthService {
     );
   }
 
-  Future<String> login({required String email, required String password}) async {
+  Future<String> login(
+      {required String email, required String password}) async {
     final response = await _dio.post(
-      '/login',
+      ApiConfig.loginPath,
       data: {
         'email': email,
         'password': password,
@@ -53,7 +54,7 @@ class AuthService {
     required String password,
   }) async {
     final response = await _dio.post(
-      '/signup',
+      ApiConfig.signupPath,
       data: {
         'name': name,
         'email': email,
@@ -77,12 +78,22 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>> fetchCurrentUser() async {
-    final response = await _dio.get('/me');
+    final response = await _dio.get(ApiConfig.mePath);
     final payload = response.data;
 
     if (payload is Map<String, dynamic>) {
+      final nestedUser = payload['user'];
+      if (nestedUser is Map<String, dynamic>) {
+        return nestedUser;
+      }
+
       final nestedData = payload['data'];
       if (nestedData is Map<String, dynamic>) {
+        final dataUser = nestedData['user'];
+        if (dataUser is Map<String, dynamic>) {
+          return dataUser;
+        }
+
         return nestedData;
       }
 
@@ -90,26 +101,16 @@ class AuthService {
     }
 
     throw DioException(
-      requestOptions: RequestOptions(path: '/me'),
+      requestOptions: RequestOptions(path: ApiConfig.mePath),
       message: 'Invalid user response payload',
       type: DioExceptionType.badResponse,
     );
   }
 
   String _extractToken(dynamic payload) {
-    if (payload is Map<String, dynamic>) {
-      final directToken = payload['token'];
-      if (directToken is String && directToken.isNotEmpty) {
-        return directToken;
-      }
-
-      final nestedData = payload['data'];
-      if (nestedData is Map<String, dynamic>) {
-        final nestedToken = nestedData['token'];
-        if (nestedToken is String && nestedToken.isNotEmpty) {
-          return nestedToken;
-        }
-      }
+    final token = _findToken(payload);
+    if (token != null) {
+      return token;
     }
 
     throw DioException(
@@ -117,5 +118,35 @@ class AuthService {
       message: 'Token not found in response payload',
       type: DioExceptionType.badResponse,
     );
+  }
+
+  String? _findToken(dynamic payload) {
+    if (payload is! Map<String, dynamic>) {
+      return null;
+    }
+
+    const tokenKeys = <String>['token', 'accessToken', 'jwt'];
+
+    for (final key in tokenKeys) {
+      final value = payload[key];
+      if (value is String && value.isNotEmpty) {
+        return value;
+      }
+    }
+
+    final nestedCandidates = <dynamic>[
+      payload['data'],
+      payload['result'],
+      payload['user'],
+    ];
+
+    for (final candidate in nestedCandidates) {
+      final nestedToken = _findToken(candidate);
+      if (nestedToken != null) {
+        return nestedToken;
+      }
+    }
+
+    return null;
   }
 }

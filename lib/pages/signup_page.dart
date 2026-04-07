@@ -237,7 +237,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                       TextSpan(
                         text: "Already have an account? ",
                         style: TextStyle(
-                          color: mainYellow.withOpacity(0.8),
+                          color: mainYellow.withValues(alpha: 0.8),
                           fontWeight: FontWeight.w500,
                           fontSize: 16,
                         ),
