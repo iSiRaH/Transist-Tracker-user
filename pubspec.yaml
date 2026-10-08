@@ -36,9 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.9
   curved_navigation_bar: ^1.0.6
   smooth_page_indicator: ^2.0.1
+  flutter_secure_storage: ^10.3.1
   dio: ^5.11.0
   flutter_riverpod: ^3.2.1
-  flutter_secure_storage: ^9.2.4
   shared_preferences: ^2.5.3
   jwt_decoder: ^2.0.1
 
