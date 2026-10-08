@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:transist_tracker/pages/home_page.dart';
 import 'package:transist_tracker/pages/login_page.dart';
@@ -6,7 +8,17 @@ import 'package:transist_tracker/pages/onboarding_page.dart';
 import 'package:transist_tracker/pages/signup_page.dart';
 import 'package:transist_tracker/providers/auth_provider.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (error) {
+    if (kDebugMode) {
+      debugPrint('Info: Could not load .env file ($error). Using default configuration.');
+    }
+  }
+
   runApp(const ProviderScope(child: MyApp()));
 }
 

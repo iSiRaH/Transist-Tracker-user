@@ -1,27 +1,63 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiConfig {
   const ApiConfig._();
 
-  // Allows backend host override at runtime:
-  // flutter run --dart-define=AUTH_BASE_URL=http://192.168.1.50:3000
-  static const String _authBaseUrlOverride =
-      String.fromEnvironment('AUTH_BASE_URL', defaultValue: '');
+  static String? _getEnv(String key) {
+    if (dotenv.isInitialized) {
+      final value = dotenv.maybeGet(key);
+      if (value != null && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+    }
+    return null;
+  }
 
-  static const String loginPath = String.fromEnvironment(
-    'AUTH_LOGIN_PATH',
-    defaultValue: '/login',
-  );
+  // Priority:
+  // 1. .env file (via flutter_dotenv)
+  // 2. --dart-define=AUTH_BASE_URL=... (or --dart-define-from-file=.env)
+  // 3. Platform default host
+  static String get _authBaseUrlOverride {
+    final fromDotenv = _getEnv('AUTH_BASE_URL');
+    if (fromDotenv != null && fromDotenv.isNotEmpty) {
+      return fromDotenv;
+    }
+    return const String.fromEnvironment('AUTH_BASE_URL', defaultValue: '');
+  }
 
-  static const String signupPath = String.fromEnvironment(
-    'AUTH_SIGNUP_PATH',
-    defaultValue: '/signup',
-  );
+  static String get loginPath {
+    final fromDotenv = _getEnv('AUTH_LOGIN_PATH');
+    if (fromDotenv != null && fromDotenv.isNotEmpty) {
+      return fromDotenv;
+    }
+    return const String.fromEnvironment(
+      'AUTH_LOGIN_PATH',
+      defaultValue: '/login',
+    );
+  }
 
-  static const String mePath = String.fromEnvironment(
-    'AUTH_ME_PATH',
-    defaultValue: '/me',
-  );
+  static String get signupPath {
+    final fromDotenv = _getEnv('AUTH_SIGNUP_PATH');
+    if (fromDotenv != null && fromDotenv.isNotEmpty) {
+      return fromDotenv;
+    }
+    return const String.fromEnvironment(
+      'AUTH_SIGNUP_PATH',
+      defaultValue: '/signup',
+    );
+  }
+
+  static String get mePath {
+    final fromDotenv = _getEnv('AUTH_ME_PATH');
+    if (fromDotenv != null && fromDotenv.isNotEmpty) {
+      return fromDotenv;
+    }
+    return const String.fromEnvironment(
+      'AUTH_ME_PATH',
+      defaultValue: '/me',
+    );
+  }
 
   static String get _host {
     if (_authBaseUrlOverride.isNotEmpty) {
@@ -33,7 +69,7 @@ class ApiConfig {
     }
 
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3000';
+      return 'http://192.168.0.77:3000';
     }
 
     return 'http://localhost:3000';
