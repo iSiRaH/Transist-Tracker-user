@@ -35,7 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.9
   curved_navigation_bar: ^1.0.6
-  smooth_page_indicator: ^2.0.1
+  smooth_page_indicator: ^3.0.0
   flutter_secure_storage: ^10.3.1
   dio: ^5.11.0
   flutter_riverpod: ^3.2.1
