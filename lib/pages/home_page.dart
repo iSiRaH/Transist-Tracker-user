@@ -7,7 +7,8 @@ import 'package:transist_tracker/pages/profile_page.dart';
 import 'package:transist_tracker/pages/time_table_page.dart';
 import 'package:transist_tracker/utils/colors.dart';
 
-final navigationIndexProvider = StateProvider<int>((ref) => 0);
+import 'package:transist_tracker/providers/navigation_provider.dart';
+export 'package:transist_tracker/providers/navigation_provider.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});

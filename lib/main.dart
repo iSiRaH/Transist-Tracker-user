@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:transist_tracker/pages/forgot_password_page.dart';
 import 'package:transist_tracker/pages/home_page.dart';
 import 'package:transist_tracker/pages/login_page.dart';
 import 'package:transist_tracker/pages/onboarding_page.dart';
@@ -60,6 +61,10 @@ class AuthGate extends ConsumerWidget {
 
     if (authState.authScreen == AuthScreen.signup) {
       return const SignupPage();
+    }
+
+    if (authState.authScreen == AuthScreen.forgotPassword) {
+      return const ForgotPasswordPage();
     }
 
     return const LoginPage();

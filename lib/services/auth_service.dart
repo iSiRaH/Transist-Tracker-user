@@ -1,8 +1,34 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:transist_tracker/models/User.dart';
 import 'package:transist_tracker/services/secure_storage_service.dart';
 import 'package:transist_tracker/utils/api_config.dart';
 
 typedef UnauthorizedCallback = void Function();
+
+class AuthResponse {
+  final String token;
+  final User? user;
+  final String? message;
+
+  const AuthResponse({
+    required this.token,
+    this.user,
+    this.message,
+  });
+}
+
+class ForgotPasswordResponse {
+  final String message;
+  final String? email;
+  final String? resetCode;
+
+  const ForgotPasswordResponse({
+    required this.message,
+    this.email,
+    this.resetCode,
+  });
+}
 
 class AuthService {
   final Dio _dio;
@@ -15,7 +41,18 @@ class AuthService {
     Dio? dio,
   })  : _secureStorageService = secureStorageService,
         _onUnauthorized = onUnauthorized,
-        _dio = dio ?? Dio(BaseOptions(baseUrl: ApiConfig.authBaseUrl)) {
+        _dio = dio ??
+            Dio(
+              BaseOptions(
+                baseUrl: ApiConfig.authBaseUrl,
+                connectTimeout: const Duration(seconds: 30),
+                receiveTimeout: const Duration(seconds: 30),
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                },
+              ),
+            ) {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -35,69 +72,199 @@ class AuthService {
     );
   }
 
-  Future<String> login(
-      {required String email, required String password}) async {
+  Future<AuthResponse> login({
+    required String email,
+    required String password,
+    bool rememberMe = false,
+  }) async {
     final response = await _dio.post(
       ApiConfig.loginPath,
       data: {
-        'email': email,
+        'email': email.trim().toLowerCase(),
         'password': password,
+        'rememberMe': rememberMe,
       },
     );
 
-    return _extractToken(response.data);
+    final token = _extractToken(response.data);
+    final user = _extractUser(response.data);
+    final message = _extractMessage(response.data);
+
+    return AuthResponse(
+      token: token,
+      user: user,
+      message: message,
+    );
   }
 
-  Future<String> signup({
+  Future<AuthResponse> signup({
     required String name,
     required String email,
     required String password,
+    required String passwordConfirm,
+    String? phone,
+    bool rememberMe = false,
   }) async {
+    final payload = <String, dynamic>{
+      'name': name.trim(),
+      'email': email.trim().toLowerCase(),
+      'password': password,
+      'passwordConfirm': passwordConfirm,
+      'role': 'user',
+      'rememberMe': rememberMe,
+    };
+
+    if (phone != null && phone.trim().isNotEmpty) {
+      payload['phone'] = phone.trim();
+    }
+
     final response = await _dio.post(
       ApiConfig.signupPath,
+      data: payload,
+    );
+
+    final token = _extractToken(response.data);
+    final user = _extractUser(response.data);
+    final message = _extractMessage(response.data);
+
+    return AuthResponse(
+      token: token,
+      user: user,
+      message: message,
+    );
+  }
+
+  Future<AuthResponse> loginWithGoogle({
+    String? idToken,
+    String? email,
+    String? name,
+    String? googleId,
+    String? profileImage,
+    bool rememberMe = true,
+  }) async {
+    final payload = <String, dynamic>{
+      'rememberMe': rememberMe,
+    };
+    if (idToken != null && idToken.isNotEmpty) payload['idToken'] = idToken;
+    if (email != null && email.isNotEmpty) payload['email'] = email;
+    if (name != null && name.isNotEmpty) payload['name'] = name;
+    if (googleId != null && googleId.isNotEmpty) payload['googleId'] = googleId;
+    if (profileImage != null && profileImage.isNotEmpty) {
+      payload['profileImage'] = profileImage;
+    }
+
+    final response = await _dio.post(
+      ApiConfig.googleLoginPath,
+      data: payload,
+    );
+
+    final token = _extractToken(response.data);
+    final user = _extractUser(response.data);
+    final message = _extractMessage(response.data);
+
+    return AuthResponse(
+      token: token,
+      user: user,
+      message: message,
+    );
+  }
+
+  Future<ForgotPasswordResponse> forgotPassword({
+    required String email,
+  }) async {
+    final response = await _dio.post(
+      ApiConfig.forgotPasswordPath,
       data: {
-        'name': name,
-        'email': email,
-        'password': password,
+        'email': email.trim().toLowerCase(),
       },
     );
 
-    return _extractToken(response.data);
+    final payload = response.data;
+    String message = 'Verification code has been sent to your email.';
+    String? resolvedEmail = email;
+    String? resetCode;
+
+    if (payload is Map<String, dynamic>) {
+      if (payload['message'] is String) {
+        message = payload['message'];
+      }
+      if (payload['resetCode'] != null) {
+        resetCode = payload['resetCode'].toString();
+      }
+      final data = payload['data'];
+      if (data is Map<String, dynamic> && data['email'] != null) {
+        resolvedEmail = data['email'].toString();
+      }
+    }
+
+    return ForgotPasswordResponse(
+      message: message,
+      email: resolvedEmail,
+      resetCode: resetCode,
+    );
   }
 
-  Future<void> saveSession(String token) async {
+  Future<AuthResponse> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+    required String passwordConfirm,
+  }) async {
+    final response = await _dio.patch(
+      ApiConfig.resetPasswordPath,
+      data: {
+        'email': email.trim().toLowerCase(),
+        'code': code.trim(),
+        'newPassword': newPassword,
+        'passwordConfirm': passwordConfirm,
+      },
+    );
+
+    final token = _extractToken(response.data);
+    final user = _extractUser(response.data);
+    final message = _extractMessage(response.data);
+
+    return AuthResponse(
+      token: token,
+      user: user,
+      message: message,
+    );
+  }
+
+  Future<void> saveSession(String token, [User? user]) async {
     await _secureStorageService.saveToken(token);
+    if (user != null) {
+      await _secureStorageService.saveUserJson(jsonEncode(user.toJson()));
+    }
   }
 
   Future<String?> getSavedToken() async {
     return _secureStorageService.readToken();
   }
 
-  Future<void> clearSession() async {
-    await _secureStorageService.clearToken();
+  Future<User?> getSavedUser() async {
+    final jsonStr = await _secureStorageService.readUserJson();
+    if (jsonStr == null || jsonStr.isEmpty) return null;
+    try {
+      final map = jsonDecode(jsonStr);
+      if (map is Map<String, dynamic>) {
+        return User.fromJson(map);
+      }
+    } catch (_) {}
+    return null;
   }
 
-  Future<Map<String, dynamic>> fetchCurrentUser() async {
+  Future<void> clearSession() async {
+    await _secureStorageService.clearAll();
+  }
+
+  Future<User> fetchCurrentUser() async {
     final response = await _dio.get(ApiConfig.mePath);
     final payload = response.data;
 
-    if (payload is Map<String, dynamic>) {
-      final nestedUser = payload['user'];
-      if (nestedUser is Map<String, dynamic>) {
-        return nestedUser;
-      }
-
-      final nestedData = payload['data'];
-      if (nestedData is Map<String, dynamic>) {
-        final dataUser = nestedData['user'];
-        if (dataUser is Map<String, dynamic>) {
-          return dataUser;
-        }
-
-        return nestedData;
-      }
-
-      return payload;
+    final user = _extractUser(payload);
+    if (user != null) {
+      return user;
     }
 
     throw DioException(
@@ -147,6 +314,33 @@ class AuthService {
       }
     }
 
+    return null;
+  }
+
+  User? _extractUser(dynamic payload) {
+    if (payload is! Map<String, dynamic>) return null;
+
+    if (payload['user'] is Map<String, dynamic>) {
+      return User.fromJson(payload['user'] as Map<String, dynamic>);
+    }
+
+    if (payload['data'] is Map<String, dynamic>) {
+      final dataMap = payload['data'] as Map<String, dynamic>;
+      if (dataMap['user'] is Map<String, dynamic>) {
+        return User.fromJson(dataMap['user'] as Map<String, dynamic>);
+      }
+      if (dataMap['id'] != null || dataMap['_id'] != null) {
+        return User.fromJson(dataMap);
+      }
+    }
+
+    return null;
+  }
+
+  String? _extractMessage(dynamic payload) {
+    if (payload is Map<String, dynamic> && payload['message'] is String) {
+      return payload['message'] as String;
+    }
     return null;
   }
 }

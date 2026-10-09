@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:transist_tracker/providers/auth_provider.dart';
 import '../widgets/reusable/bus_details_page/bus_card.dart';
 
-class BusDetailsPage extends StatelessWidget {
+class BusDetailsPage extends ConsumerWidget {
   const BusDetailsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+    final userName = (authState.currentUser?.name != null &&
+            authState.currentUser!.name.trim().isNotEmpty)
+        ? authState.currentUser!.name.trim()
+        : "Passenger";
+
     return Scaffold(
       backgroundColor: const Color(0xFFF6F6F6),
       body: SafeArea(
@@ -22,10 +30,10 @@ class BusDetailsPage extends StatelessWidget {
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text("Hello Rose!",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text("Select your bus!",
+                  children: [
+                    Text("Hello $userName!",
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text("Select your bus!",
                         style: TextStyle(color: Color(0xffFFD800), fontSize: 14)),
                   ],
                 ),
